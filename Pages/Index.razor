@@ -1,0 +1,227 @@
+@page "/"
+
+<PageTitle>Converter</PageTitle>
+
+<div class="d-flex min-vh-100 justify-content-center align-items-center">
+    <div>
+        <div class="form-group container col-md-10 frame">
+            <label class="p-2 h4">Mode:</label>
+            <div class="input-group mb-4">
+                <select class="form-control form-control" @onchange="ModeChanged">
+                    @foreach (var mode in modes)
+                    {
+                        <option value="@mode">@mode</option>
+                    }
+                </select>
+                <button class="btn btn-primary btn ml-2" @onclick="ConvertAndShowResult">Calculate</button>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <select class="form-control form-control mb-2" @bind="selectedInputUnit">
+                        @foreach (var unit in inputUnits)
+                        {
+                            <option value="@unit">@unit</option>
+                        }
+                    </select>
+                </div>
+                <div class="col">
+                    <select class="form-control form-control mb-2" @bind="selectedOutputUnit">
+                        @foreach (var unit in outputUnits)
+                        {
+                            <option value="@unit">@unit</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <input type="text" class="form-control form-control mb-2" @bind="inputValue" placeholder="Input Value" />
+                </div>
+                <div class="col">
+                    <input type="text" class="form-control form-control mb-2" @bind="outputValue" placeholder="Output Value" readonly />
+                </div>
+            </div>
+            <hr>
+            <p style="text-align: right; margin: 0; padding: 0;">&copy; 2024 - UnitsConverter - <a href="https://github.com/ShadowPrice1328/UnitsConverterWASM">GitHub</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('mousemove', function(e) {
+        let x = (e.clientX / window.innerWidth) * 100;
+        let y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.backgroundPosition = `${50 - x / 10}% ${50 - y / 10}%`;
+    });
+</script>
+
+@code {
+    private string currentMode = string.Empty;
+        private IEnumerable<string> modes = ["Time", "Area", "Length", "Temperature"];
+        private string selectedInputUnit = string.Empty;
+        private string selectedOutputUnit = string.Empty;
+        private string inputValue = string.Empty;
+        private string outputValue = string.Empty;
+        private string selectedMode = "Time";
+        private IEnumerable<string> inputUnits = [];
+        private IEnumerable<string> outputUnits = [];
+            
+        //-------------------------------------------------------
+        private void Reset()
+        {
+            selectedInputUnit = inputUnits.FirstOrDefault() ?? "Select";
+            selectedOutputUnit = inputUnits.FirstOrDefault() ?? "Select";
+            inputValue = string.Empty;
+            outputValue = string.Empty;
+        }
+        void ModeChanged(ChangeEventArgs e)
+        {
+            selectedMode = e.Value?.ToString() ?? "Time";
+
+            switch (selectedMode)
+            {
+                case "Time":
+                    inputUnits = ["Second", "Minute", "Hour"];
+                    outputUnits = ["Second", "Minute", "Hour"];
+                    break;
+                case "Length":
+                    inputUnits = ["Meter", "Centimeter", "Millimeter"];
+                    outputUnits = ["Meter", "Centimeter", "Millimeter"];
+                    break;
+                case "Area":
+                    inputUnits = ["Square meter", "Square decimeter", "Square centimeter"];
+                    outputUnits = ["Square meter", "Square decimeter", "Square centimeter"];
+                    break;
+                case "Temperature":
+                    inputUnits = ["Celsius", "Fahrenheit", "Kelvin"];
+                    outputUnits = ["Celsius", "Fahrenheit", "Kelvin"];
+                    break;
+            }
+
+            if (currentMode != selectedMode) Reset();
+        }
+        private void ShowCurrentMode() => currentMode = selectedMode;
+        protected override void OnInitialized() => InitializeUnits();
+        private void InitializeUnits()
+        {
+            inputUnits = ["Second", "Minute", "Hour"];
+            outputUnits = ["Second", "Minute", "Hour"];
+            selectedInputUnit = inputUnits.First();
+            selectedOutputUnit = outputUnits.First();
+        }
+        private void ConvertAndShowResult()
+        {
+            if (!double.TryParse(inputValue, out var input)) return;
+
+            double result = 0;
+
+            switch (selectedMode)
+            {
+                case "Time":
+                    result = ConvertTime(input, selectedInputUnit, selectedOutputUnit);
+                    break;
+                case "Length":
+                    result = ConvertLength(input, selectedInputUnit, selectedOutputUnit);
+                    break;
+                case "Area":
+                    result = ConvertArea(input, selectedInputUnit, selectedOutputUnit);
+                    break;
+                case "Temperature":
+                    result = ConvertTemperature(input, selectedInputUnit, selectedOutputUnit);
+                    break;
+            }
+
+            outputValue = result.ToString();
+        }
+        private double ConvertTime(double inputValue, string inputUnit, string outputUnit) => inputUnit switch
+        {
+            "Second" => outputUnit switch
+            {
+                "Minute" => inputValue / 60,
+                "Hour" => inputValue / 3600,
+                _ => inputValue
+            },
+            "Minute" => outputUnit switch
+            {
+                "Second" => inputValue * 60,
+                "Hour" => inputValue / 60,
+                _ => inputValue
+            },
+            "Hour" => outputUnit switch
+            {
+                "Second" => inputValue * 3600,
+                "Minute" => inputValue * 60,
+                _ => inputValue
+            },
+            _ => inputValue
+        };
+        private double ConvertLength(double inputValue, string inputUnit, string outputUnit) => inputUnit switch
+        {
+            "Meter" => outputUnit switch
+            {
+                "Centimeter" => inputValue * 100,
+                "Millimeter" => inputValue * 1000,
+                _ => inputValue
+            },
+            "Centimeter" => outputUnit switch
+            {
+                "Meter" => inputValue / 100,
+                "Millimeter" => inputValue * 10,
+                _ => inputValue
+            },
+            "Millimeter" => outputUnit switch
+            {
+                "Meter" => inputValue / 1000,
+                "Centimeter" => inputValue / 10,
+                _ => inputValue
+            },
+            _ => inputValue
+        };
+        private double ConvertArea(double inputValue, string inputUnit, string outputUnit) => inputUnit switch
+        {
+            "Square meter" => outputUnit switch
+            {
+                "Square decimeter" => inputValue * 100,
+                "Square centimeter" => inputValue * 10000,
+                _ => inputValue
+            },
+            "Square decimeter" => outputUnit switch
+            {
+                "Square meter" => inputValue / 100,
+                "Square centimeter" => inputValue * 100,
+                _ => inputValue
+            },
+            "Square centimeter" => outputUnit switch
+            {
+                "Square meter" => inputValue / 10000,
+                "Square decimeter" => inputValue / 100,
+                _ => inputValue
+            },
+            _ => inputValue
+        };
+        private double ConvertTemperature(double inputValue, string inputUnit, string outputUnit) => inputUnit switch
+        {
+            "Celsius" => outputUnit switch
+            {
+                "Fahrenheit" => (inputValue * 9 / 5) + 32,
+                "Kelvin" => inputValue + 273.15,
+                _ => inputValue
+            },
+            "Fahrenheit" => outputUnit switch
+            {
+                "Celsius" => (inputValue - 32) * 5 / 9,
+                "Kelvin" => (inputValue + 459.67) * 5 / 9,
+                _ => inputValue
+            },
+            "Kelvin" => outputUnit switch
+            {
+                "Celsius" => inputValue - 273.15,
+                "Fahrenheit" => (inputValue * 9 / 5) - 459.67,
+                _ => inputValue
+            },
+            _ => inputValue
+        };
+    }
+}

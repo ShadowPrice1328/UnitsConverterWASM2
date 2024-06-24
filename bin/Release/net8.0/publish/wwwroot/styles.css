@@ -1,0 +1,27 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-image: url(./assets/wallpaper.jpg);
+    backdrop-filter: blur(5px);
+    background-repeat: revert-layer;
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+}
+.frame {
+    overflow: hidden;
+    padding: 30px;
+    max-width: 625px;
+    height: 315px;
+    border: solid grey 1px;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 10px;
+    opacity: 95%;
+    background-color: white;
+    box-shadow: 5px 5px 5px gray;
+}
